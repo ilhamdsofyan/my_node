@@ -1,3 +1,4 @@
+const Joi = require("joi");
 const express = require("express");
 const app = new express;
 
@@ -40,8 +41,14 @@ app.get('/api/customer/:id', function(req, res) {
 });
 
 app.post('/api/customer', function(req, res) {
-    if (!req.body.name || req.body.name.length < 3) {
-        res.status(404).send(displayMessage("Name is required and should be minimum 3 character, obey the rules sunapabic"));
+    const schema = {
+        name: Joi.string().min(3).max(30).required(),
+    };
+
+    let validate = Joi.validate(req.body, schema);
+
+    if (validate.error) {
+        res.status(404).send(displayMessage(validate.error.details[0].message));
     } else {
         // add new data
         let new_id = customers.length + 1;
@@ -51,10 +58,12 @@ app.post('/api/customer', function(req, res) {
         };
         customers.push(customer);
         
-        // let single_customer = customers.find(cust => cust.id === parseInt(new_id));
-        // if (!single_customer) res.status(500).send(displayMessage("500 <br/> The customer you're saved has failed. It's your fault Mutafaka!!!"));
-        
-        res.send(customers);
+        let single_customer = customers.find(cust => cust.id === parseInt(new_id));
+        if (!single_customer) {
+            res.status(500).send(displayMessage("500 <br/> Saving process has failed. It's your fault Mutafaka!!!"));
+        } else {
+            res.send(customers);
+        }
     }
 
 });
